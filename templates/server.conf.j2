@@ -1,21 +1,23 @@
 {{ ansible_managed | comment }}
 
-port 1194
-proto udp
+port {{ openvpn_port|default('1194') }}
+proto {{ openvpn_proto|default('udp') }}
 dev tun
 ca /etc/openvpn/server/ca.crt
 cert /etc/openvpn/server/server.crt
 key /etc/openvpn/server/server.key
 dh /etc/openvpn/server/dh.pem
 topology subnet
-server 10.8.0.0 255.255.255.0
+server {{ openvpn_server|default('10.8.0.0 255.255.255.0') }}
 ifconfig-pool-persist ipp.txt
 push "redirect-gateway def1 bypass-dhcp"
-push "dhcp-option DNS 1.1.1.1"
-push "dhcp-option DNS 1.0.0.1"
+{% for dns in openvpn_dns|default(['1.1.1.1', '1.0.0.1']) %}
+push "dhcp-option DNS {{ dns }}"
+{% endfor %}
 keepalive 10 120
 # tls-crypt /etc/openvpn/server/myvpn.tlsauth 0
 cipher AES-256-CBC
+data-ciphers {{ openvpn_data_ciphers|default('AES-256-GCM:AES-128-GCM:CHACHA20-POLY1305') }}
 user nobody
 group {{ openvpn_group }}
 persist-key
